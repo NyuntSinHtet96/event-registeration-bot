@@ -7,3 +7,5 @@ uvicorn==0.41.0
 qrcode[pil]==8.2
 SQLAlchemy==2.0.43
 PyMySQL[rsa]==1.1.1
+ruff==0.15.2
+pytest==8.3.4

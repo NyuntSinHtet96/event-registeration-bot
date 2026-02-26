@@ -69,6 +69,20 @@ python3 -m uvicorn api.main:app --reload --host 127.0.0.1 --port 8000
 python3 -m bot.main
 ```
 
+## Code Quality Tests
+
+Run linting:
+
+```bash
+ruff check .
+```
+
+Run test suite:
+
+```bash
+pytest
+```
+
 ## API Endpoints
 
 - `GET /events` - list events (default `status=OPEN`)
@@ -126,8 +140,8 @@ What it does:
 - CI on pull requests and pushes to `main`
 - Starts MySQL service in workflow
 - Installs dependencies
-- Compiles Python modules
-- Runs API + bot smoke tests
+- Runs `ruff check .`
+- Runs `pytest`
 
 Optional CD deploy:
 - Runs only on push to `main`

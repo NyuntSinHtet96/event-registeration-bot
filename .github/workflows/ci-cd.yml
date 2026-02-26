@@ -76,50 +76,13 @@ jobs:
               raise SystemExit("MySQL did not become ready in time")
           PY
 
-      - name: Compile Python modules
+      - name: Run Ruff
         run: |
-          python -m py_compile \
-            api/main.py api/db.py api/models.py api/routers/events.py api/routers/registration.py \
-            bot/config.py bot/keyboards.py bot/states.py bot/main.py bot/api_client.py \
-            bot/handlers/start.py bot/handlers/register.py
+          ruff check .
 
-      - name: Run application smoke tests
+      - name: Run Pytest
         run: |
-          python - <<'PY'
-          import os
-
-          from fastapi.testclient import TestClient
-          from api.main import app
-
-          # Ensure token is present before importing bot modules.
-          os.environ.setdefault("BOT_TOKEN", "123456:ci-placeholder-token")
-          from bot.main import build_application
-
-          with TestClient(app) as client:
-              events = client.get("/events")
-              assert events.status_code == 200, events.text
-              assert len(events.json()) >= 1, "Expected seeded events"
-
-              payload = {
-                  "event_id": "evt_001",
-                  "telegram_user_id": 123456,
-                  "full_name": "CI User",
-                  "email": "ci.user@example.com",
-                  "phone": "+6591112222",
-              }
-              registration = client.post("/registrations", json=payload)
-              assert registration.status_code == 200, registration.text
-              registration_id = registration.json()["registration_id"]
-
-              qr = client.post(f"/registrations/{registration_id}/qr")
-              assert qr.status_code == 200, qr.text
-              assert qr.json().get("qr_token"), "Missing qr_token in response"
-
-          bot_app = build_application()
-          assert bot_app is not None
-
-          print("CI checks passed")
-          PY
+          pytest
 
   deploy:
     name: CD Deploy
