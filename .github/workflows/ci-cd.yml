@@ -80,9 +80,9 @@ jobs:
         run: |
           ruff check .
 
-      - name: Run Pytest
+      - name: Run Pytest with Coverage
         run: |
-          pytest
+          pytest --cov=api --cov=bot --cov-report=term-missing
 
   deploy:
     name: CD Deploy

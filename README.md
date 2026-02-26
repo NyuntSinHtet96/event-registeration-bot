@@ -83,6 +83,12 @@ Run test suite:
 pytest
 ```
 
+Run test coverage:
+
+```bash
+pytest --cov=api --cov=bot --cov-report=term-missing
+```
+
 ## API Endpoints
 
 - `GET /events` - list events (default `status=OPEN`)
@@ -141,7 +147,7 @@ What it does:
 - Starts MySQL service in workflow
 - Installs dependencies
 - Runs `ruff check .`
-- Runs `pytest`
+- Runs `pytest` with coverage report output
 
 Optional CD deploy:
 - Runs only on push to `main`
