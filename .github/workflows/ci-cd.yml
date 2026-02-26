@@ -1,0 +1,138 @@
+name: CI/CD
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    name: CI Checks
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: event_bot
+          MYSQL_USER: event_user
+          MYSQL_PASSWORD: event_pass
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=12
+
+    env:
+      DATABASE_URL: mysql+pymysql://event_user:event_pass@127.0.0.1:3306/event_bot
+      API_BASE_URL: http://127.0.0.1:8000
+      BOT_TOKEN: ci-placeholder-token
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Wait for MySQL
+        run: |
+          python - <<'PY'
+          import time
+          import pymysql
+
+          for attempt in range(30):
+              try:
+                  conn = pymysql.connect(
+                      host="127.0.0.1",
+                      user="event_user",
+                      password="event_pass",
+                      database="event_bot",
+                      port=3306,
+                      connect_timeout=3,
+                  )
+                  conn.close()
+                  print("MySQL is ready")
+                  break
+              except Exception as exc:
+                  print(f"MySQL not ready ({attempt + 1}/30): {exc}")
+                  time.sleep(2)
+          else:
+              raise SystemExit("MySQL did not become ready in time")
+          PY
+
+      - name: Compile Python modules
+        run: |
+          python -m py_compile \
+            api/main.py api/db.py api/models.py api/routers/events.py api/routers/registration.py \
+            bot/config.py bot/keyboards.py bot/states.py bot/main.py bot/api_client.py \
+            bot/handlers/start.py bot/handlers/register.py
+
+      - name: Run application smoke tests
+        run: |
+          python - <<'PY'
+          from fastapi.testclient import TestClient
+          from bot.main import build_application
+          from api.main import app
+
+          client = TestClient(app)
+
+          events = client.get("/events")
+          assert events.status_code == 200, events.text
+          assert len(events.json()) >= 1, "Expected seeded events"
+
+          payload = {
+              "event_id": "evt_001",
+              "telegram_user_id": 123456,
+              "full_name": "CI User",
+              "email": "ci.user@example.com",
+              "phone": "+6591112222",
+          }
+          registration = client.post("/registrations", json=payload)
+          assert registration.status_code == 200, registration.text
+          registration_id = registration.json()["registration_id"]
+
+          qr = client.post(f"/registrations/{registration_id}/qr")
+          assert qr.status_code == 200, qr.text
+          assert qr.json().get("qr_token"), "Missing qr_token in response"
+
+          bot_app = build_application()
+          assert bot_app is not None
+
+          print("CI checks passed")
+          PY
+
+  deploy:
+    name: CD Deploy
+    needs: ci
+    runs-on: ubuntu-latest
+    if: >-
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main' &&
+      secrets.DEPLOY_HOST != '' &&
+      secrets.DEPLOY_USER != '' &&
+      secrets.DEPLOY_SSH_KEY != '' &&
+      secrets.DEPLOY_COMMAND != ''
+    steps:
+      - name: Run remote deploy command
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: ${{ secrets.DEPLOY_COMMAND }}

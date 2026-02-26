@@ -117,6 +117,29 @@ flowchart TD
     BOTQR --> U
 ```
 
+## CI/CD Pipeline
+
+GitHub Actions workflow file:
+- `.github/workflows/ci-cd.yml`
+
+What it does:
+- CI on pull requests and pushes to `main`
+- Starts MySQL service in workflow
+- Installs dependencies
+- Compiles Python modules
+- Runs API + bot smoke tests
+
+Optional CD deploy:
+- Runs only on push to `main`
+- Uses SSH and executes a remote deploy command
+- Auto-skips if deploy secrets are not configured
+
+Required deploy secrets:
+- `DEPLOY_HOST`
+- `DEPLOY_USER`
+- `DEPLOY_SSH_KEY`
+- `DEPLOY_COMMAND`
+
 ## Troubleshooting
 
 - Port `8000` already in use:
