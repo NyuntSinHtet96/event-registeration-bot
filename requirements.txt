@@ -6,4 +6,7 @@ pydantic==2.10.3
 uvicorn==0.41.0
 qrcode[pil]==8.2
 SQLAlchemy==2.0.43
-PyMySQL==1.1.1
+PyMySQL[rsa]==1.1.1
+ruff==0.15.2
+pytest==8.3.4
+pytest-cov==5.0.0
