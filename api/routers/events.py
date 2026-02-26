@@ -1,36 +1,34 @@
-from fastapi import APIRouter
-from pydantic import BaseModel
 from datetime import datetime
+
+from fastapi import APIRouter, Depends
+from pydantic import BaseModel, ConfigDict
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from api.db import get_db
+from api.models import Event
 
 router = APIRouter(prefix="/events", tags=["events"])
 
+
 class EventOut(BaseModel):
-    id:str
-    title:str
-    start_time:datetime
+    id: str
+    title: str
+    start_time: datetime
     location: str
     capacity: int
     status: str
 
-@router.get("",response_model=list[EventOut])
+    model_config = ConfigDict(from_attributes=True)
+
+
+@router.get("", response_model=list[EventOut])
 # Purpose: Return events filtered by status for bot and clients.
-def list_events(status:str = "OPEN"):
-    events = [
-         EventOut(
-            id="evt_001",
-            title="NUS-ISS Career Sharing",
-            start_time=datetime(2026, 3, 5, 19, 0),
-            location="LT19",
-            capacity=100,
-            status="OPEN",
-        ),
-        EventOut(
-            id="evt_002",
-            title="Python FastAPI Workshop",
-            start_time=datetime(2026, 3, 10, 14, 0),
-            location="Online",
-            capacity=200,
-            status="OPEN",
-        ),
-    ]
-    return [e for e in events if e.status==status]
+def list_events(status: str = "OPEN", db: Session = Depends(get_db)) -> list[EventOut]:
+    stmt = select(Event)
+    if status:
+        stmt = stmt.where(Event.status == status)
+    stmt = stmt.order_by(Event.start_time.asc())
+
+    rows = db.scalars(stmt).all()
+    return [EventOut.model_validate(row) for row in rows]
