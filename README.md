@@ -40,7 +40,7 @@ Create `.env` in the project root:
 ```env
 BOT_TOKEN=your-telegram-bot-token
 API_BASE_URL=http://localhost:8000
-DATABASE_URL=mysql+pymysql://event_user:event_pass@127.0.0.1:3306/event_bot
+DATABASE_URL=mysql+pymysql://event_user:event_pass@127.0.0.1:3307/event_bot
 ```
 
 ## Run Locally
@@ -51,22 +51,25 @@ DATABASE_URL=mysql+pymysql://event_user:event_pass@127.0.0.1:3306/event_bot
 docker compose up -d mysql
 ```
 
-2) Install dependencies
+2) Create virtual environment and install dependencies
 
 ```bash
-python3 -m pip install -r requirements.txt
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
 ```
 
 3) Run API (Terminal 1)
 
 ```bash
-python3 -m uvicorn api.main:app --reload --host 127.0.0.1 --port 8000
+python -m uvicorn api.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
 4) Run bot (Terminal 2)
 
 ```bash
-python3 -m bot.main
+python -m bot.main
 ```
 
 ## Code Quality Tests
