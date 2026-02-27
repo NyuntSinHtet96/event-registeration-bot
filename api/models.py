@@ -37,5 +37,24 @@ class Registration(Base):
     email: Mapped[str] = mapped_column(String(180), nullable=False)
     phone: Mapped[str] = mapped_column(String(40), nullable=False)
     qr_token: Mapped[str | None] = mapped_column(Text, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=utcnow)
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=utcnow, onupdate=utcnow)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=utcnow
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=utcnow, onupdate=utcnow
+    )
+
+
+class CheckIn(Base):
+    __tablename__ = "checkins"
+    __table_args__ = (UniqueConstraint("registration_id", name="uq_registration_checkin"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    registration_id: Mapped[str] = mapped_column(
+        ForeignKey("registrations.registration_id"), nullable=False, index=True
+    )
+    event_id: Mapped[str] = mapped_column(ForeignKey("events.id"), nullable=False, index=True)
+    method: Mapped[str] = mapped_column(String(40), nullable=False, default="qr_scan")
+    checked_in_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=utcnow
+    )

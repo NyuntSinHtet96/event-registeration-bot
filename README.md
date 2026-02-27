@@ -72,6 +72,12 @@ python -m uvicorn api.main:app --reload --host 127.0.0.1 --port 8000
 python -m bot.main
 ```
 
+5) Open check-in GUI (staff tool)
+
+- URL: `http://127.0.0.1:8000/checkins/gui`
+- Select event, start camera, scan guest QR code
+- Or paste `qr_token` manually and submit
+
 ## Code Quality Tests
 
 Run linting:
@@ -98,6 +104,8 @@ pytest --cov=api --cov=bot --cov-report=term-missing
 - `POST /registrations` - create/update registration
 - `GET /registrations/{registration_id}` - get one registration
 - `POST /registrations/{registration_id}/qr` - create/get QR token
+- `POST /checkins/scan` - mark attendee check-in by event id + QR token
+- `GET /checkins/gui` - web GUI for camera/manual check-in
 
 Swagger:
 - `http://127.0.0.1:8000/docs`
