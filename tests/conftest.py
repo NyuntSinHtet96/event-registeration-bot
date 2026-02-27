@@ -10,5 +10,5 @@ os.environ.setdefault("BOT_TOKEN", "123456:pytest-placeholder-token")
 os.environ.setdefault("API_BASE_URL", "http://127.0.0.1:8000")
 os.environ.setdefault(
     "DATABASE_URL",
-    "mysql+pymysql://event_user:event_pass@127.0.0.1:3306/event_bot",
+    "mysql+pymysql://event_user:event_pass@127.0.0.1:3307/event_bot",
 )
